@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Week.world - Pro Edition (Hybrid)</title>
+<title>Week.world - Pro Edition (Easy-Mix)</title>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
@@ -24,7 +24,7 @@ body{margin:0;font-family:'Segoe UI',Arial;overflow:hidden; background: #000; to
     justify-content: center;
     align-items: center;
     transition: opacity 0.5s ease;
-    overflow-y: auto; /* Mobilde menü sığmazsa kaydırılsın */
+    overflow-y: auto;
     padding: 20px 0;
 }
 
@@ -69,14 +69,14 @@ body{margin:0;font-family:'Segoe UI',Arial;overflow:hidden; background: #000; to
 
 /* OYUN İÇİ UI */
 .top-bar{ position:absolute;top:10px;left:0;width:100%; display:flex; flex-direction: column; align-items:center; gap: 5px; z-index:1000; pointer-events:none; }
-.city-box{background:#ffcc00;padding:8px 15px;border-radius:10px;font-weight:bold;pointer-events:auto; font-size: 14px;}
+.city-box{background:#ffcc00;padding:8px 15px;border-radius:10px;font-weight:bold;pointer-events:auto; font-size: 14px; color: black;}
 .score-box{background:#00c853;color:white;padding:5px 15px;border-radius:10px;font-weight:bold;pointer-events:auto;}
 .timer-box{ position:absolute; bottom: 100px; left:50%; transform:translateX(-50%); background:#ff3d00;color:white;padding:10px 20px;border-radius:20px; font-size:18px;font-weight:bold;z-index:1000; }
 
 .bottom-bar{ position:absolute;bottom:30px;left:50%;transform:translateX(-50%); z-index:1000; width: 90%; text-align: center;}
 button.guess-btn { width: 80%; max-width: 300px; padding:15px; font-size:18px; border:none; border-radius:30px; background:#2962ff; color:white; font-weight:bold; cursor:pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
 
-/* MOD KARTLARI MOBİL UYUM */
+/* MOD KARTLARI */
 .modes-container { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; padding: 20px; }
 .mode-card { width: 240px; height: 320px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.3s; }
 .mode-card:active { transform: scale(0.95); }
@@ -84,13 +84,12 @@ button.guess-btn { width: 80%; max-width: 300px; padding:15px; font-size:18px; b
 
 /* MESAFE VE SONUÇ KUTULARI */
 .distance-box{ position:absolute; top: 120px; left:50%; transform:translateX(-50%); background:#2962ff; color:white; padding:8px 20px; border-radius:20px; font-weight:bold; z-index:1000; display:none; white-space: nowrap; font-size: 12px; }
-.result-box{ position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:white; padding:25px; border-radius:20px; z-index:10000; display:none; width:85%; max-width:400px; text-align: center; }
+.result-box{ position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:white; padding:25px; border-radius:20px; z-index:10000; display:none; width:85%; max-width:400px; text-align: center; color: black; }
 
 @media (max-width: 600px) {
     h1 { font-size: 2.5rem !important; }
     .mode-card { width: 80vw; height: 120px; flex-direction: row; padding: 0 20px; justify-content: flex-start; gap: 20px; }
     .mode-icon { font-size: 40px; }
-    .mode-desc { display: none; }
     #rank-container { min-width: 140px; right: 10px; top: 10px; }
     #playtime-container { left: 10px; top: 10px; }
 }
@@ -180,17 +179,32 @@ function updateRankUI() {
     }
 }
 
+// --- GÜNCELLENMİŞ ŞEHİR LİSTESİ ---
+var cities = [
+    // KOLAY / POPÜLER ŞEHİRLER (32 Tane)
+    ["İstanbul",41.00,28.97],["Ankara",39.93,32.85],["İzmir",38.41,27.12],["Antalya",36.89,30.71],
+    ["Londra",51.50,-0.12],["Paris",48.85,2.35],["Berlin",52.52,13.40],["Roma",41.90,12.49],
+    ["Madrid",40.41,-3.70],["Atina",37.98,23.72],["Moskova",55.75,37.61],["Amsterdam",52.36,4.89],
+    ["Brüksel",50.85,4.35],["Viyana",48.20,16.37],["Prag",50.07,14.43],["Varşova",52.22,21.01],
+    ["Tokyo",35.67,139.65],["Pekin",39.90,116.40],["Seul",37.56,126.97],["Dubai",25.20,55.27],
+    ["Bakü",40.40,49.86],["Bağdat",33.31,44.36],["Kahire",30.04,31.23],["Riyad",24.71,46.67],
+    ["New York",40.71,-74.00],["Los Angeles",34.05,-118.24],["Miami",25.76,-80.19],["Toronto",43.65,-79.38],
+    ["Rio de Janeiro",-22.90,-43.17],["Buenos Aires",-34.60,-58.38],["Sidney",-33.86,151.20],["Meksiko",19.43,-99.13],
+
+    // ORTA / BİRAZ DAHA ZORLAYICI (32 Tane)
+    ["Reykjavik",64.13,-21.82],["Oslo",59.91,10.75],["Stokholm",59.32,18.06],["Helsinki",60.16,24.93],
+    ["Lizbon",38.72,-9.13],["Budapeşte",47.49,19.04],["Bükreş",44.42,26.10],["Kiev",50.45,30.52],
+    ["Dublin",53.34,-6.26],["Kopenhag",55.67,12.56],["Zürih",47.37,8.54],["Lüksemburg",49.61,6.13],
+    ["Singapur",1.35,103.81],["Bangkok",13.75,100.50],["Mumbai",19.07,72.87],["Yeni Delhi",28.61,77.20],
+    ["Jakarta",-6.20,106.84],["Manila",14.59,120.98],["Hanoi",21.02,105.83],["Ulan Batur",47.88,106.89],
+    ["Astana",51.16,71.47],["Taşkent",41.29,69.24],["Tiflis",41.71,44.78],["Tahran",35.68,51.38],
+    ["Vancouver",49.28,-123.12],["Chicago",41.87,-87.62],["Santiago",-33.44,-70.66],["Lima",-12.04,-77.04],
+    ["Bogota",4.71,-74.07],["Cape Town",-33.92,18.42],["Nairobi",-1.29,36.82],["Auckland",-36.84,174.76]
+];
+
 // --- HARİTA VE OYUN ---
 var map = L.map('map', {zoomControl: false, attributionControl: false, tap: true}).setView([20,0],2);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
-
-var cities = [
-    ["Ankara",39.93,32.85],["Berlin",52.52,13.40],["Madrid",40.41,-3.70],["Roma",41.90,12.49],["Atina",37.98,23.72],
-    ["Paris",48.85,2.35],["Londra",51.50,-0.12],["Tokyo",35.67,139.65],["New York",40.71,-74.00],["Rio",-22.90,-43.17],
-    ["İstanbul",41.00,28.97],["Moskova",55.75,37.61],["Dubai",25.20,55.27],["Seul",37.56,126.97],["Pekin",39.90,116.40],
-    ["Reykjavik",64.13,-21.82],["Oslo",59.91,10.75],["Sidney",-33.86,151.20],["Kahire",30.04,31.23],["Cape Town",-33.92,18.42]
-    // ... diğer şehirler aynı şekilde eklenebilir
-];
 
 var selectedCity, lastCityIndex=-1, guessMarker=null, realMarker=null, line=null;
 var score=0, timerInterval, timeLeft=120, roundActive=false, currentMode='normal';
@@ -282,7 +296,7 @@ function makeGuess(){
 }
 
 function backToLobby() {
-    location.reload(); // En temiz sıfırlama
+    location.reload(); // Sayfayı yenileyerek temiz başla
 }
 
 function gameOver(msg) {
