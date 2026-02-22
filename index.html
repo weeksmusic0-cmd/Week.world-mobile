@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Week.world - Pro Edition (Hybrid)</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<style>
+body{margin:0;font-family:'Segoe UI',Arial;overflow:hidden; background: #000; touch-action: none;}
+#map{height:100vh; width: 100vw; cursor:crosshair;}
+
+/* ANA MENÜ TASARIMI */
+#main-menu {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100vh;
+    background: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.9)), url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1920&q=80') center/cover;
+    backdrop-filter: blur(10px);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    transition: opacity 0.5s ease;
+    overflow-y: auto; /* Mobilde menü sığmazsa kaydırılsın */
+    padding: 20px 0;
+}
+
+/* SOL ÜST OYNAMA SÜRESİ PANELİ */
+#playtime-container {
+    position: fixed;
+    top: 15px; left: 15px;
+    background: rgba(20, 25, 35, 0.85);
+    padding: 10px 15px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 10001;
+    color: white;
+    backdrop-filter: blur(8px);
+}
+.playtime-label { font-size: 9px; text-transform: uppercase; color: #9da3af; font-weight: 800; }
+#playtime-display { font-size: 14px; font-weight: bold; color: #ffcc00; }
+
+/* SAĞ ÜST RANK PANELİ */
+#rank-container {
+    position: fixed;
+    top: 15px; right: 15px;
+    background: rgba(20, 25, 35, 0.85);
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 10001;
+    color: white;
+    min-width: 180px;
+    backdrop-filter: blur(8px);
+}
+
+.rank-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+#rank-emoji { font-size: 24px; }
+.rank-info { text-align: left; }
+.rank-label { font-size: 9px; text-transform: uppercase; color: #9da3af; font-weight: 800; }
+#rank-name { font-size: 14px; font-weight: bold; color: #fff; }
+
+.win-bar { height: 8px; background: rgba(255, 255, 255, 0.05); border-radius: 4px; display: flex; gap: 2px; }
+.tick { flex: 1; background: rgba(255, 255, 255, 0.1); border-radius: 1px; }
+.tick.active { background: #ffcc00; }
+
+/* OYUN İÇİ UI */
+.top-bar{ position:absolute;top:10px;left:0;width:100%; display:flex; flex-direction: column; align-items:center; gap: 5px; z-index:1000; pointer-events:none; }
+.city-box{background:#ffcc00;padding:8px 15px;border-radius:10px;font-weight:bold;pointer-events:auto; font-size: 14px;}
+.score-box{background:#00c853;color:white;padding:5px 15px;border-radius:10px;font-weight:bold;pointer-events:auto;}
+.timer-box{ position:absolute; bottom: 100px; left:50%; transform:translateX(-50%); background:#ff3d00;color:white;padding:10px 20px;border-radius:20px; font-size:18px;font-weight:bold;z-index:1000; }
+
+.bottom-bar{ position:absolute;bottom:30px;left:50%;transform:translateX(-50%); z-index:1000; width: 90%; text-align: center;}
+button.guess-btn { width: 80%; max-width: 300px; padding:15px; font-size:18px; border:none; border-radius:30px; background:#2962ff; color:white; font-weight:bold; cursor:pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+
+/* MOD KARTLARI MOBİL UYUM */
+.modes-container { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; padding: 20px; }
+.mode-card { width: 240px; height: 320px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.3s; }
+.mode-card:active { transform: scale(0.95); }
+.mode-icon { font-size: 60px; }
+
+/* MESAFE VE SONUÇ KUTULARI */
+.distance-box{ position:absolute; top: 120px; left:50%; transform:translateX(-50%); background:#2962ff; color:white; padding:8px 20px; border-radius:20px; font-weight:bold; z-index:1000; display:none; white-space: nowrap; font-size: 12px; }
+.result-box{ position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:white; padding:25px; border-radius:20px; z-index:10000; display:none; width:85%; max-width:400px; text-align: center; }
+
+@media (max-width: 600px) {
+    h1 { font-size: 2.5rem !important; }
+    .mode-card { width: 80vw; height: 120px; flex-direction: row; padding: 0 20px; justify-content: flex-start; gap: 20px; }
+    .mode-icon { font-size: 40px; }
+    .mode-desc { display: none; }
+    #rank-container { min-width: 140px; right: 10px; top: 10px; }
+    #playtime-container { left: 10px; top: 10px; }
+}
+</style>
+</head>
+<body>
+
+<div id="playtime-container">
+    <div class="playtime-label">TOPLAM OYNAMA SÜRESİ</div>
+    <div id="playtime-display">0 Saat 0 Dakika</div>
+</div>
+
+<div id="rank-container">
+    <div class="rank-header">
+        <div id="rank-emoji">⛓️</div>
+        <div class="rank-info">
+            <div class="rank-label">Rütbe</div>
+            <div id="rank-name">Demir</div>
+        </div>
+    </div>
+    <div id="progress-area"><div class="win-bar" id="win-ticks"></div></div>
+</div>
+
+<div id="main-menu">
+    <h1 style="font-size:4rem; color:white; margin:0;">Week.world</h1>
+    <p style="color:white; opacity:0.6; margin-bottom: 20px;">Dünyayı Tahmin Et</p>
+    <div class="modes-container">
+        <div class="mode-card" onclick="startGame('speedrun')"><span class="mode-icon">⏱️</span><h3>Speedrun</h3></div>
+        <div class="mode-card" onclick="startGame('normal')"><span class="mode-icon">🌍</span><h3>Dünya</h3></div>
+        <div class="mode-card" onclick="startGame('hardcore')"><span class="mode-icon">🧭</span><h3>Hardcore</h3></div>
+    </div>
+</div>
+
+<div class="top-bar">
+    <div class="city-box"><span id="cityName">Yükleniyor...</span></div>
+    <div class="score-box">Puan: <span id="score">0</span></div>
+</div>
+
+<div class="timer-box" id="timer">02:00</div>
+<div class="distance-box" id="distanceBox"></div>
+
+<div class="bottom-bar">
+    <button class="guess-btn" id="guessBtn" onclick="makeGuess()">TAHMİN ET</button>
+</div>
+
+<div class="result-box" id="result"></div>
+<div id="map"></div>
+
+<script>
+// --- VERİ SİSTEMİ ---
+let wins = parseInt(localStorage.getItem('weekWorldWins')) || 0;
+let totalSeconds = parseInt(localStorage.getItem('weekWorldPlaytime')) || 0;
+
+setInterval(() => {
+    totalSeconds++;
+    localStorage.setItem('weekWorldPlaytime', totalSeconds);
+    updatePlaytimeUI();
+}, 1000);
+
+function updatePlaytimeUI() {
+    let hours = Math.floor(totalSeconds / 3600);
+    let minutes = Math.floor((totalSeconds % 3600) / 60);
+    document.getElementById('playtime-display').innerText = `${hours}s ${minutes}dk`;
+}
+
+function updateRankUI() {
+    const ticksContainer = document.getElementById('win-ticks');
+    const nameDiv = document.getElementById('rank-name');
+    const emojiDiv = document.getElementById('rank-emoji');
+    
+    let emoji, name;
+    if (wins < 20) { emoji = "⛓️"; name = "Demir"; }
+    else if (wins < 40) { emoji = "🥈"; name = "Gümüş"; }
+    else if (wins < 60) { emoji = "🥇"; name = "Altın"; }
+    else if (wins < 80) { emoji = "💎"; name = "Elmas"; }
+    else { emoji = "👑"; name = "Efsane"; }
+
+    emojiDiv.innerText = emoji;
+    nameDiv.innerText = name;
+    
+    ticksContainer.innerHTML = '';
+    let currentLevelWins = wins % 20;
+    for (let i = 0; i < 20; i++) {
+        const tick = document.createElement('div');
+        tick.className = 'tick' + (i < currentLevelWins ? ' active' : '');
+        ticksContainer.appendChild(tick);
+    }
+}
+
+// --- HARİTA VE OYUN ---
+var map = L.map('map', {zoomControl: false, attributionControl: false, tap: true}).setView([20,0],2);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
+
+var cities = [
+    ["Ankara",39.93,32.85],["Berlin",52.52,13.40],["Madrid",40.41,-3.70],["Roma",41.90,12.49],["Atina",37.98,23.72],
+    ["Paris",48.85,2.35],["Londra",51.50,-0.12],["Tokyo",35.67,139.65],["New York",40.71,-74.00],["Rio",-22.90,-43.17],
+    ["İstanbul",41.00,28.97],["Moskova",55.75,37.61],["Dubai",25.20,55.27],["Seul",37.56,126.97],["Pekin",39.90,116.40],
+    ["Reykjavik",64.13,-21.82],["Oslo",59.91,10.75],["Sidney",-33.86,151.20],["Kahire",30.04,31.23],["Cape Town",-33.92,18.42]
+    // ... diğer şehirler aynı şekilde eklenebilir
+];
+
+var selectedCity, lastCityIndex=-1, guessMarker=null, realMarker=null, line=null;
+var score=0, timerInterval, timeLeft=120, roundActive=false, currentMode='normal';
+
+function startGame(mode) {
+    currentMode = mode;
+    score = 0;
+    document.getElementById("score").innerText = "0";
+    document.getElementById('main-menu').style.opacity = '0';
+    document.getElementById('main-menu').style.visibility = 'hidden';
+    document.getElementById('rank-container').style.display = 'none';
+    document.getElementById('playtime-container').style.display = 'none';
+    setTimeout(() => { map.invalidateSize(); startRound(); }, 600);
+}
+
+function startRound(){
+    if(score >= 25000) { showFinalScreen(); return; }
+    if(guessMarker) map.removeLayer(guessMarker);
+    if(realMarker) map.removeLayer(realMarker);
+    if(line) map.removeLayer(line);
+    document.getElementById("distanceBox").style.display="none";
+    document.getElementById("guessBtn").style.display="inline-block";
+    
+    timeLeft = (currentMode === 'speedrun') ? 60 : 120;
+    document.getElementById("timer").style.display = (currentMode === 'hardcore') ? "none" : "block";
+    updateTimerDisplay();
+
+    let index;
+    do{ index=Math.floor(Math.random()*cities.length); }while(index===lastCityIndex);
+    lastCityIndex=index;
+    selectedCity=cities[index];
+    document.getElementById("cityName").innerText = selectedCity[0];
+
+    roundActive=true;
+    clearInterval(timerInterval);
+    if(currentMode !== 'hardcore') {
+        timerInterval=setInterval(() => {
+            timeLeft--;
+            updateTimerDisplay();
+            if(timeLeft<=0){ clearInterval(timerInterval); gameOver("Süre Bitti!"); }
+        },1000);
+    }
+}
+
+function updateTimerDisplay(){
+    let m=String(Math.floor(Math.max(0,timeLeft)/60)).padStart(2,'0');
+    let s=String(Math.max(0,timeLeft)%60).padStart(2,'0');
+    document.getElementById("timer").innerText=m+":"+s;
+}
+
+map.on("click", (e) => {
+    if(!roundActive) return;
+    if(guessMarker) map.removeLayer(guessMarker);
+    guessMarker=L.marker(e.latlng).addTo(map);
+});
+
+function makeGuess(){
+    if(!roundActive || !guessMarker) return;
+    clearInterval(timerInterval);
+    roundActive=false;
+    document.getElementById("guessBtn").style.display="none";
+    
+    let realLatLng=L.latLng(selectedCity[1],selectedCity[2]);
+    realMarker=L.marker(realLatLng).addTo(map);
+    let guessLatLng=guessMarker.getLatLng();
+    line=L.polyline([guessLatLng,realLatLng],{color:'red',weight:3}).addTo(map);
+    
+    let dist=map.distance(guessLatLng,realLatLng)/1000;
+    if(currentMode === 'hardcore' && dist > 500) { gameOver("500km aşıldı!"); return; }
+
+    let roundScore=Math.max(0,Math.floor(5000-dist*5));
+    score+=roundScore;
+    document.getElementById("score").innerText=score;
+    document.getElementById("distanceBox").innerText=Math.round(dist)+" km mesafe. +"+roundScore+" Puan";
+    document.getElementById("distanceBox").style.display="block";
+
+    setTimeout(() => {
+        if(score >= 25000) showFinalScreen();
+        else {
+            let countdown = 10;
+            document.getElementById("timer").style.display = "block";
+            let cdInterval = setInterval(() => {
+                document.getElementById("timer").innerText = "Sıradaki: " + countdown;
+                countdown--;
+                if(countdown < 0) { clearInterval(cdInterval); startRound(); }
+            }, 1000);
+        }
+    }, 2000);
+}
+
+function backToLobby() {
+    location.reload(); // En temiz sıfırlama
+}
+
+function gameOver(msg) {
+    document.getElementById("result").style.display="block";
+    document.getElementById("result").innerHTML = `<h2>ELENDİN</h2><p>${msg}</p><button onclick="backToLobby()" class="guess-btn">LOBİ</button>`;
+}
+
+function showFinalScreen(){
+    wins++;
+    localStorage.setItem('weekWorldWins', wins);
+    document.getElementById("result").style.display="block";
+    document.getElementById("result").innerHTML = `<h2 style="color:green">TEBRİKLER!</h2><p>25.000 Puan!</p><button onclick="backToLobby()" class="guess-btn">LOBİ</button>`;
+}
+
+updateRankUI();
+updatePlaytimeUI();
+</script>
+</body>
+</html>
