@@ -28,6 +28,12 @@ body{margin:0;font-family:'Segoe UI',Arial;overflow:hidden; background: #000; to
     padding: 20px 0;
 }
 
+/* MOD KARTLARI İSİM RENGİ DÜZELTME */
+.mode-card h3 {
+    color: white; /* İsimler beyaz yapıldı */
+    margin: 10px 0 0 0;
+}
+
 /* SOL ÜST OYNAMA SÜRESİ PANELİ */
 #playtime-container {
     position: fixed;
@@ -179,9 +185,8 @@ function updateRankUI() {
     }
 }
 
-// --- GÜNCELLENMİŞ ŞEHİR LİSTESİ ---
+// --- ŞEHİR LİSTESİ ---
 var cities = [
-    // KOLAY / POPÜLER ŞEHİRLER (32 Tane)
     ["İstanbul",41.00,28.97],["Ankara",39.93,32.85],["İzmir",38.41,27.12],["Antalya",36.89,30.71],
     ["Londra",51.50,-0.12],["Paris",48.85,2.35],["Berlin",52.52,13.40],["Roma",41.90,12.49],
     ["Madrid",40.41,-3.70],["Atina",37.98,23.72],["Moskova",55.75,37.61],["Amsterdam",52.36,4.89],
@@ -190,8 +195,6 @@ var cities = [
     ["Bakü",40.40,49.86],["Bağdat",33.31,44.36],["Kahire",30.04,31.23],["Riyad",24.71,46.67],
     ["New York",40.71,-74.00],["Los Angeles",34.05,-118.24],["Miami",25.76,-80.19],["Toronto",43.65,-79.38],
     ["Rio de Janeiro",-22.90,-43.17],["Buenos Aires",-34.60,-58.38],["Sidney",-33.86,151.20],["Meksiko",19.43,-99.13],
-
-    // ORTA / BİRAZ DAHA ZORLAYICI (32 Tane)
     ["Reykjavik",64.13,-21.82],["Oslo",59.91,10.75],["Stokholm",59.32,18.06],["Helsinki",60.16,24.93],
     ["Lizbon",38.72,-9.13],["Budapeşte",47.49,19.04],["Bükreş",44.42,26.10],["Kiev",50.45,30.52],
     ["Dublin",53.34,-6.26],["Kopenhag",55.67,12.56],["Zürih",47.37,8.54],["Lüksemburg",49.61,6.13],
@@ -296,7 +299,7 @@ function makeGuess(){
 }
 
 function backToLobby() {
-    location.reload(); // Sayfayı yenileyerek temiz başla
+    location.reload(); 
 }
 
 function gameOver(msg) {
